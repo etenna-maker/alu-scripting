@@ -12,17 +12,17 @@ def count_words(subreddit, word_list, after="", counts=None):
 
     url = "https://www.reddit.com/r/{}/hot.json?limit=100&after={}".format(
         subreddit, after)
-    headers = {"User-Agent": "alu-reddit-project"}
-    response = requests.get(url, headers=headers, allow_redirects=False)
-    if response.status_code != 200:
+    headers = {"User-Agent": "PostmanRuntime/7.35.0"}
+    try:
+        response = requests.get(url, headers=headers, allow_redirects=False)
+        data = response.json().get("data")
+        for post in data.get("children"):
+            title_words = post.get("data").get("title").lower().split()
+            for word in title_words:
+                if word in counts:
+                    counts[word] += 1
+    except Exception:
         return
-
-    data = response.json().get("data")
-    for post in data.get("children"):
-        title_words = post.get("data").get("title").lower().split()
-        for word in title_words:
-            if word in counts:
-                counts[word] += 1
 
     after = data.get("after")
     if after is not None:

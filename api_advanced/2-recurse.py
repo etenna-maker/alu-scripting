@@ -7,13 +7,14 @@ def recurse(subreddit, hot_list=[], after=""):
     """Recursively gets all hot post titles, or None if invalid"""
     url = "https://www.reddit.com/r/{}/hot.json?limit=100&after={}".format(
         subreddit, after)
-    headers = {"User-Agent": "alu-reddit-project"}
-    response = requests.get(url, headers=headers, allow_redirects=False)
-    if response.status_code != 200:
+    headers = {"User-Agent": "PostmanRuntime/7.35.0"}
+    try:
+        response = requests.get(url, headers=headers, allow_redirects=False)
+        data = response.json().get("data")
+        for post in data.get("children"):
+            hot_list.append(post.get("data").get("title"))
+    except Exception:
         return None
-    data = response.json().get("data")
-    for post in data.get("children"):
-        hot_list.append(post.get("data").get("title"))
     after = data.get("after")
     if after is None:
         return hot_list
