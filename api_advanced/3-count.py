@@ -3,18 +3,21 @@
 import requests
 
 
-def count_words(subreddit, word_list, after="", counts=None):
+def count_words(subreddit, word_list, after="", count=0, counts=None):
     """Recursively counts keywords and prints them sorted"""
     if counts is None:
         counts = {}
         for word in word_list:
             counts[word.lower()] = 0
 
-    url = "https://www.reddit.com/r/{}/hot.json?limit=100&after={}".format(
-        subreddit, after)
+    url = "https://www.reddit.com/r/{}/hot.json".format(subreddit)
     headers = {"User-Agent": "PostmanRuntime/7.35.0"}
+    params = {"after": after, "count": count, "limit": 100}
+    response = requests.get(url, headers=headers, params=params,
+                            allow_redirects=False)
+    if response.status_code == 404:
+        return
     try:
-        response = requests.get(url, headers=headers, allow_redirects=False)
         data = response.json().get("data")
         for post in data.get("children"):
             title_words = post.get("data").get("title").lower().split()
@@ -25,8 +28,9 @@ def count_words(subreddit, word_list, after="", counts=None):
         return
 
     after = data.get("after")
+    count += data.get("dist")
     if after is not None:
-        count_words(subreddit, word_list, after, counts)
+        count_words(subreddit, word_list, after, count, counts)
         return
 
     totals = {}
@@ -36,5 +40,5 @@ def count_words(subreddit, word_list, after="", counts=None):
             totals[word] = totals.get(word, 0) + counts[word]
 
     sorted_words = sorted(totals.items(), key=lambda x: (-x[1], x[0]))
-    for word, count in sorted_words:
-        print("{}: {}".format(word, count))
+    for word, total in sorted_words:
+        print("{}: {}".format(word, total))
